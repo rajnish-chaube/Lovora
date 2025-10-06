@@ -1,20 +1,35 @@
-node_modules
-dist
+# Node dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+.next/ 
+.cache/
+
+# Environment files
 .env
-.DS_Store
-.vscode
+.env.local
+.env.*.local
+
+# Logs, coverage, OS files
 *.log
-.idea
-*.swp
-coverage
 npm-debug.log*
-yarn-error.log
+yarn-error.log*
 lerna-debug.log*
+coverage/
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# Tooling
 .pnp
 .pnp.js
-.cache
-.next
-out
-/build
-/node_modules
 /.turbo
+.vercel/
+.swa/
