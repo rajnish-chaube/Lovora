@@ -73,9 +73,6 @@ app.listen(777, ()=>{
 
 
 ** Season-2 Lec-6 -------------------------------------------------------------------------------------------
-
-
-*/
 const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
@@ -118,4 +115,63 @@ connectDB()
 // app.listen(777, ()=>{
 //     console.log("Server is running on port 777");
 // });
+** Season-2 Lec-7 -------------------------------------------------------------------------------------------
+
+
+
+*/
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+const User = require("./models/user");
+
+app.use(express.json()); // (optional, if you’ll parse JSON later)
+
+app.post("/signup", async (req, res) => {
+    const user = new User(req.body);
+    try {
+        await user.save();
+        res.send("User signed up successfully");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error creating user" + err.message);
+    }
+});
+//Get user by emailId
+app.get("/user", async (req, res) => {
+    const userEmail = req.query.emailId;
+    try {
+        const user = await User.findOne({emailId: userEmail});
+        // if(user.length === 0){
+        //     res.status(404).send("User not found");
+        // } else {
+        res.send(user,"User found");
+        // }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving user");
+    }
+});
+
+app.get("/feed", async (req, res) => {
+    try {
+        const user = await User.find({});
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving user");
+    }
+});
+
+connectDB()
+    .then(() => {
+        console.log("Database connected successfully");
+        app.listen(7777, () => {
+            console.log("Server is running on port 7777");
+        });
+    })
+    .catch((err) => {
+        console.log("Database connection failed");
+        console.log(err);
+    });
 
