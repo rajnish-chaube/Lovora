@@ -116,10 +116,6 @@ connectDB()
 //     console.log("Server is running on port 777");
 // });
 ** Season-2 Lec-7 -------------------------------------------------------------------------------------------
-
-
-
-*/
 const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
@@ -143,10 +139,10 @@ app.get("/user", async (req, res) => {
     try {
         const user = await User.findOne({emailId: userEmail});
         // if(user.length === 0){
-        //     res.status(404).send("User not found");
-        // } else {
-        res.send(user,"User found");
-        // }
+            //     res.status(404).send("User not found");
+            // } else {
+                res.send(user,"User found");
+                // }
     } catch (err) {
         console.error(err);
         res.status(500).send("Error retrieving user");
@@ -164,8 +160,59 @@ app.get("/feed", async (req, res) => {
 });
 
 connectDB()
+.then(() => {
+    console.log("Database connected successfully");
+    app.listen(7777, () => {
+        console.log("Server is running on port 7777");
+    });
+})
+.catch((err) => {
+    console.log("Database connection failed");
+        console.log(err);
+    });
+** Season-2 Lec-8 -------------------------------------------------------------------------------------------
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+const User = require("./models/user");
+
+app.use(express.json()); 
+
+//? update validation
+app.get("/feed", async (req, res) => {
+    try {
+        const user = await User.find({});
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving user");
+    }
+});
+
+app.patch("/user", async (req, res) => {
+    const userId = req.body.userId;
+    const data = req.body;
+    
+    try{    
+        const ALLOWED_UPDATES = ["userId", "age", "gender", "photoUrl", "about"];
+        const isUpdateAllowed = Object.keys(data).every((k)=>
+            ALLOWED_UPDATES.includes(k)
+        );
+    
+        if(!isUpdateAllowed){
+            return res.status(400).send("Invalid updates! You can only update "+ ALLOWED_UPDATES);
+        }
+        const user = await User.findByIdAndUpdate({_id:userId},data,{ReturnDocument:"after", runValidators:true});
+        console.log(user);
+        res.send("User updated successfully");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error updating user"+ err.message);
+    }
+});
+
+connectDB()
     .then(() => {
-        console.log("Database connected successfully");
         app.listen(7777, () => {
             console.log("Server is running on port 7777");
         });
@@ -175,3 +222,56 @@ connectDB()
         console.log(err);
     });
 
+** Season-2 Lec-9 -------------------------------------------------------------------------------------------
+*/
+
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+const User = require("./models/user");
+
+app.use(express.json()); 
+
+//? update validation
+app.get("/feed", async (req, res) => {
+    try {
+        const user = await User.find({});
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving user");
+    }
+});
+
+app.patch("/user", async (req, res) => {
+    const userId = req.body.userId;
+    const data = req.body;
+
+    try{    
+        const ALLOWED_UPDATES = ["userId", "age", "gender", "photoUrl", "about"];
+        const isUpdateAllowed = Object.keys(data).every((k)=>
+            ALLOWED_UPDATES.includes(k)
+        );
+    
+        if(!isUpdateAllowed){
+            return res.status(400).send("Invalid updates! You can only update "+ ALLOWED_UPDATES);
+        }
+        const user = await User.findByIdAndUpdate({_id:userId},data,{ReturnDocument:"after", runValidators:true});
+        console.log(user);
+        res.send("User updated successfully");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error updating user"+ err.message);
+    }
+});
+
+connectDB()
+    .then(() => {
+        app.listen(7777, () => {
+            console.log("Server is running on port 7777");
+        });
+    })
+    .catch((err) => {
+        console.log("Database connection failed");
+        console.log(err);
+    });
