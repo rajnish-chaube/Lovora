@@ -1,1 +1,14 @@
-run: echo "Hi, I'm Rajnish"
+name: Greet
+
+# Trigger the workflow on push to main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print greeting
+        run: echo "Hi, I'm Rajnish"
