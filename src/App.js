@@ -223,47 +223,132 @@ connectDB()
     });
 
 ** Season-2 Lec-9 -------------------------------------------------------------------------------------------
-*/
-
 const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user");
+const validateSignUpData = require("./utils/validation.js");
+const bcrypt = require("bcrypt");
 
 app.use(express.json()); 
 
-//? update validation
-app.get("/feed", async (req, res) => {
+// app.post("/signup", async (req, res) => {
+//     try {
+//         //validation of data
+//         validateSignUpData(req);
+//         const user1 = new User(req.body);
+//         await user1.save();
+//         res.send("User Added successfully");
+//     } catch (err) {
+//         res.status(400).send("Error creating user:" + err.message);
+//     }
+// });
+
+app.post("/signup", async (req, res) => {
     try {
-        const user = await User.find({});
-        res.json(user);
+        //validation of data
+        validateSignUpData(req);
+        //  Encrypt the password
+        const {firstName, lastName, emailId, password} = req.body;
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log(passwordHash);
+        const user1 = new User(firstName, lastName, emailId, { password: passwordHash });
+        await user1.save();
+        res.send("User Added successfully");
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Error retrieving user");
+        res.status(400).send("Error creating user:" + err.message);
     }
 });
-
-app.patch("/user", async (req, res) => {
-    const userId = req.body.userId;
-    const data = req.body;
-
-    try{    
-        const ALLOWED_UPDATES = ["userId", "age", "gender", "photoUrl", "about"];
-        const isUpdateAllowed = Object.keys(data).every((k)=>
-            ALLOWED_UPDATES.includes(k)
-        );
-    
-        if(!isUpdateAllowed){
-            return res.status(400).send("Invalid updates! You can only update "+ ALLOWED_UPDATES);
+app.post("/login", async (req, res) => {
+    try {
+        validateSignUpData(req);
+        const { emailId, password } = req.body;
+        const user = await User.findOne({ emailId: emailId });
+        if (!user) {
+            throw new Error("EmailId not found in DB");
         }
-        const user = await User.findByIdAndUpdate({_id:userId},data,{ReturnDocument:"after", runValidators:true});
-        console.log(user);
-        res.send("User updated successfully");
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new Error("Invalid password");
+        }
+        else res.send("Login successful!!");
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Error updating user"+ err.message);
+        res.status(400).send("Error creating user:" + err.message);
     }
 });
+
+connectDB()
+    .then(() => {
+        app.listen(7777, () => {
+            console.log("Server is running on port 7777");
+        });
+    })
+    .catch((err) => {
+        console.log("Database connection failed");
+        console.log(err);
+    });
+** Season-2 Lec-10 ------------------------------------------------------------------------------------------- 
+*/
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+const User = require("./models/user");
+const {validateSignUpData} = require("./utils/validation.js");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+
+
+app.use(express.json()); 
+app.use(cookieParser());
+
+app.post("/signup", async (req, res) => {
+    try {
+        //validation of data
+        validateSignUpData(req);
+        //  Encrypt the password
+        const {firstName, lastName, emailId, password} = req.body;
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log(passwordHash);
+        const user1 = new User(firstName, lastName, emailId, { password: passwordHash });
+        await user1.save();
+        res.send("User Added successfully");
+    } catch (err) {
+        res.status(400).send("Error creating user:" + err.message);
+    }
+});
+app.post("/login", async (req, res) => {
+    try {
+        const { emailId, password } = req.body;
+        const user = await User.findOne({ emailId: emailId });
+        if (!user) {
+            throw new Error("EmailId not found in DB");
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+
+            //! create JWT token
+            res.send("Login successful!!");
+        }
+        else {
+            throw new Error("Invalid password");
+        }
+    } catch (err) {
+        res.status(400).send("Error creating user:" + err.message);
+    }
+});
+
+app.get("/profile", async (req, res) => {
+    const cookies = req.cookies;
+    const {token} = req.cookies;
+    //! validate cookie
+
+    console.log(cookies);
+    res.send("Reading cookies");
+});
+
+app.post("/logout", async (req, res) => {
+})
 
 connectDB()
     .then(() => {
