@@ -236,8 +236,8 @@ app.use(express.json());
 //     try {
 //         //validation of data
 //         validateSignUpData(req);
-//         const user1 = new User(req.body);
-//         await user1.save();
+//         const user = new User(req.body);
+//         await user.save();
 //         res.send("User Added successfully");
 //     } catch (err) {
 //         res.status(400).send("Error creating user:" + err.message);
@@ -252,8 +252,8 @@ app.post("/signup", async (req, res) => {
         const {firstName, lastName, emailId, password} = req.body;
         const passwordHash = await bcrypt.hash(password, 10);
         console.log(passwordHash);
-        const user1 = new User(firstName, lastName, emailId, { password: passwordHash });
-        await user1.save();
+        const user = new User(firstName, lastName, emailId, { password: passwordHash });
+        await user.save();
         res.send("User Added successfully");
     } catch (err) {
         res.status(400).send("Error creating user:" + err.message);
@@ -291,27 +291,26 @@ connectDB()
 */
 const express = require("express");
 const connectDB = require("./config/database");
-const app = express();
 const User = require("./models/user");
-const {validateSignUpData} = require("./utils/validation.js");
-const bcrypt = require("bcrypt");
+const validateSignUpData = require("./utils/validation.js");
+const bcrypt = require("bcryptjs");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 
-
+const app = express();
 app.use(express.json()); 
 app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
     try {
-        //validation of data
+        //validation of data 
         validateSignUpData(req);
         //  Encrypt the password
         const {firstName, lastName, emailId, password} = req.body;
         const passwordHash = await bcrypt.hash(password, 10);
         console.log(passwordHash);
-        const user1 = new User(firstName, lastName, emailId, { password: passwordHash });
-        await user1.save();
+        const user = new User({firstName, lastName, emailId,  password: passwordHash });
+        await user.save();
         res.send("User Added successfully");
     } catch (err) {
         res.status(400).send("Error creating user:" + err.message);
@@ -325,9 +324,12 @@ app.post("/login", async (req, res) => {
             throw new Error("EmailId not found in DB");
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-
-            //! create JWT token
+        if (isPasswordValid) {
+            //! create a JWT token
+            const token = await jwt.sign({_id:user._id}, "raj290");
+            console.log(token);
+              
+            res.cookie("token", token);
             res.send("Login successful!!");
         }
         else {
@@ -339,16 +341,37 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/profile", async (req, res) => {
-    const cookies = req.cookies;
-    const {token} = req.cookies;
+    try{
+        const cookies = req.cookies;
+        const {token} = req.cookies;
     //! validate cookie
+    if (!token){
+        throw new Error("No token found");
+    }
+    const decodedMessage = await jwt.verify(token, "raj290");
+    console.log(decodedMessage);
+    const {_id} = decodedMessage;
+    console.log("Logged in user:"+_id);
 
-    console.log(cookies);
-    res.send("Reading cookies");
+    const user = await User.findById({_id});
+    if(!user){
+        throw new Error("User not found");
+    }
+    res.send("Reading cookies",user);
+    } catch (err) { 
+    res.status(401).send("Error creating user:" + err.message);
+    }
 });
 
-app.post("/logout", async (req, res) => {
-})
+app.get("/feed", async (req, res) => {
+    try {
+        const user = await User.find({});
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving user");
+    }
+});
 
 connectDB()
     .then(() => {
