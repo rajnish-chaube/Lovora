@@ -303,9 +303,9 @@ app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
     try {
-        //validation of data 
+        //! validation of data 
         validateSignUpData(req);
-        //  Encrypt the password
+        //!  Encrypt the password
         const {firstName, lastName, emailId, password} = req.body;
         const passwordHash = await bcrypt.hash(password, 10);
         console.log(passwordHash);
@@ -325,7 +325,7 @@ app.post("/login", async (req, res) => {
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (isPasswordValid) {
-            //! create a JWT token
+            //! create  A  JWT token
             const token = await jwt.sign({_id:user._id}, "raj290");
             console.log(token);
               
